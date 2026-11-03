@@ -7,11 +7,11 @@ pipeline {
     }
 
     environment {
-        AWS_REGION = "${env.AWS_REGION ?: 'eu-north-1'}"
-        AWS_ACCOUNT_ID = "${env.AWS_ACCOUNT_ID ?: ''}"
-        PUSH_TO_ECR = "${env.PUSH_TO_ECR ?: 'false'}"
-        IMAGE_TAG = "${env.BUILD_NUMBER ?: 'local'}"
-    }
+    AWS_REGION = 'eu-north-1'
+    AWS_ACCOUNT_ID = '004720838210'
+    PUSH_TO_ECR = 'true'
+    IMAGE_TAG = "${env.BUILD_NUMBER ?: 'local'}"
+}
 
     stages {
         stage('Checkout') {
