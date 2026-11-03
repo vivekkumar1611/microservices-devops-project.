@@ -1,0 +1,88 @@
+pipeline {
+    agent any
+
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
+    environment {
+        AWS_REGION = "${env.AWS_REGION ?: 'eu-north-1'}"
+        AWS_ACCOUNT_ID = "${env.AWS_ACCOUNT_ID ?: ''}"
+        PUSH_TO_ECR = "${env.PUSH_TO_ECR ?: 'false'}"
+        IMAGE_TAG = "${env.BUILD_NUMBER ?: 'local'}"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                sh 'git rev-parse --short HEAD'
+            }
+        }
+
+        stage('Install test dependencies') {
+            steps {
+                sh '''
+                    python3 -m venv .venv
+                    . .venv/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements-dev.txt
+                '''
+            }
+        }
+
+        stage('Unit tests') {
+            steps {
+                sh '''
+                    . .venv/bin/activate
+                    pytest -q
+                '''
+            }
+        }
+
+        stage('Build Docker images') {
+            steps {
+                sh '''
+                    docker build -t microservices-user-service:${IMAGE_TAG} services/user-service
+                    docker build -t microservices-order-service:${IMAGE_TAG} services/order-service
+                    docker build -t microservices-product-service:${IMAGE_TAG} services/product-service
+                '''
+            }
+        }
+
+        stage('Push images to Amazon ECR') {
+            when {
+                expression { return env.PUSH_TO_ECR == 'true' }
+            }
+            steps {
+                sh '''
+                    set -eu
+                    test -n "$AWS_ACCOUNT_ID"
+                    aws ecr get-login-password --region "$AWS_REGION" | \
+                      docker login --username AWS --password-stdin \
+                      "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+
+                    for service in user-service order-service product-service; do
+                      local_image="microservices-${service}:${IMAGE_TAG}"
+                      remote_image="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/microservices-${service}:${IMAGE_TAG}"
+                      docker tag "$local_image" "$remote_image"
+                      docker push "$remote_image"
+                    done
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker image ls microservices-* || true'
+        }
+        success {
+            echo 'CI pipeline completed successfully.'
+        }
+        failure {
+            echo 'CI pipeline failed. Review the stage logs.'
+        }
+    }
+}

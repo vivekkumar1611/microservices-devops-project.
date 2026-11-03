@@ -1,0 +1,30 @@
+services:
+  user-service:
+    build:
+      context: ./services/user-service
+    image: microservices-user-service:local
+    ports:
+      - "8001:8000"
+    environment:
+      SERVICE_NAME: user-service
+    restart: unless-stopped
+
+  product-service:
+    build:
+      context: ./services/product-service
+    image: microservices-product-service:local
+    ports:
+      - "8002:8000"
+    environment:
+      SERVICE_NAME: product-service
+    restart: unless-stopped
+
+  order-service:
+    build:
+      context: ./services/order-service
+    image: microservices-order-service:local
+    ports:
+      - "8003:8000"
+    environment:
+      SERVICE_NAME: order-service
+    restart: unless-stopped
