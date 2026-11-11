@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dynamic-test-pod
+  namespace: microservices
+spec:
+  containers:
+    - name: storage-test
+      image: busybox:1.36
+      command: ["sh", "-c", "echo 'Dynamic provisioning works!' > /data/dynamic.txt && sleep 36000"]
+      volumeMounts:
+        - name: dynamic-storage
+          mountPath: /data
+  volumes:
+    - name: dynamic-storage
+      persistentVolumeClaim:
+        claimName: dynamic-demo-claim

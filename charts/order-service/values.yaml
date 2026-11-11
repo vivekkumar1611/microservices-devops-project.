@@ -1,0 +1,38 @@
+replicaCount: 1
+
+image:
+  repository: 004720838210.dkr.ecr.eu-north-1.amazonaws.com/microservices-order-service
+  tag: "3"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: ecr-registry
+
+containerPort: 8000
+
+service:
+  type: ClusterIP
+  port: 8003
+  targetPort: 8000
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 10
+  periodSeconds: 20
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi

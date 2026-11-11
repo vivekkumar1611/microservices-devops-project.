@@ -13,9 +13,11 @@ spec:
       labels:
         app: order-service
     spec:
+      imagePullSecrets:
+        - name: ecr-registry
       containers:
         - name: order-service
-          image: YOUR_AWS_ACCOUNT_ID.dkr.ecr.eu-north-1.amazonaws.com/microservices-order-service:latest
+          image: 004720838210.dkr.ecr.eu-north-1.amazonaws.com/microservices-order-service:3
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
